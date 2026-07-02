@@ -1,4 +1,4 @@
-# fmultiplier — FP32 Multiplier (Handshake, Multi-Cycle, IEEE-754)
+ # fmultiplier — FP32 Multiplier (Handshake, Multi-Cycle, IEEE-754)
 
 ## Overview
 `fmultiplier` is a **multi-cycle** single-precision floating-point multiplier that accepts one operation at a time using a **valid/out_valid** handshake. Internally it runs a staged pipeline controlled by a small FSM (`counter`) and produces a 32-bit IEEE-754 binary32 result.
@@ -7,7 +7,7 @@ This design currently targets:
 - **Bit-accurate results for normal FP32 numbers** (typical IEEE-754 behavior with round-to-nearest-even),
 - Deterministic latency (fixed number of cycles from `valid` to `out_valid`),
 - The design behaves as: z = a*b 
-- z, a and b are single precision 32-bit IEEE-754 numbers
+- a, b and z are IEEE-754 binary32 (single-precision) floating-point values.
 
 ---
 
@@ -61,7 +61,8 @@ For each operand:
 Internal signals:
 - `a_s, b_s, z_s`: sign bits
 - `a_e, b_e, z_e`: signed exponent in *unbiased* domain (stored as 10-bit regs, used with `$signed`)
-- `a_m, b_m, z_m`: mantissas extended to 24-bit with hidden 1 when applicable
+- `a_m, b_m, z_m`: mantissas extended to 24-bit with hidden 1 when applicable    
+
 - `product`: 50-bit product of mantissas
 - `guard_bit`, `round_bit`, `sticky`: rounding support bits for RNE
 
@@ -77,7 +78,8 @@ All stage actions are performed inside a single sequential always block using `c
 
 ### Stage 1 — Unpack
 - Extract mantissas into 24-bit regs (initially `{1'b0, frac}`).
-- Convert biased exponent into unbiased form: `exp - 127`.
+-
+ Convert biased exponent into unbiased form: `exp - 127`.
 - Capture signs.
 
 ### Stage 2 — Special classification + denormal setup
@@ -118,7 +120,6 @@ This stage performs:
    - If `G == 1` and `(R || S || LSB)` then increment mantissa.
    - Handles carry-out from rounding:
      - If rounding overflows mantissa, set mantissa to 0x800000 and increment exponent.
-
 ### Stage 7 — Pack
 - For normal path:
   - Pack sign, biased exponent, fraction.
